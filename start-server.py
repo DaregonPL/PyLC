@@ -36,50 +36,55 @@ if ch == True:
     if ch == False:
         listn=16
     sock.listen(int(listn))
+    print('Cleaning Chat... \nPreparing for work...')
+#    with open('content/Chat.txt', 'w') as file:
+#        file.write('')
     print('Server is ready for work')
     print('Queue started - waiting for clients')
+
+#           MAiN LooP
+    
     while True:
+        # accepting one client
         connection, client_address = sock.accept()
-        data=connection.recv(1024)
-        chat=open('content/Chat.txt','a')
-        data=data.decode()
-        print('got: '+data)
-        get=data.split('$$$')
-        if get[0] == 'msg':
-            data=get[1]+'$$$'+get[2]
-            string=int(get[3])
-        elif get[0] == 'sys':
-            if get[2] == 'j':
-                get[2]=' joined this server.'
-            elif get[2] == 'e':
-                get[2]=' left.'
-            data=get[1]+get[2]
-        chat.write('\n'+data)
-        chat.close()
-        with open('content/Chat.txt', 'r') as file:
-            strinfile = sum(1 for line in file)-1
-        sendstr=str(strinfile-string)
-        chat=open('content/Chat.txt','r')
-        txt=chat.read()
-        txt=txt.split('\n')
-        if sendstr != 1 and get[0] == 'msg':
+        # recieving data
+        inf=connection.recv(1024)
+        print('Got: '+inf.decode())
+        got=inf.decode().split('&&&&&')
+        inf=got[0].split('####')
+        with open('content/Chat.txt','a') as file:
+            for msg in inf:
+                file.write('\n'+msg)
+        #       SENDING INFO
+        #   finding the string
+        # how many Strings In File (SIF)
+        with open('content/Chat.txt','r') as file:
+            fs=file.read().split('\n')
+        fs.pop(0)
+        sif=len(fs)
+        # decoding message
+        stringmsg=int(got[1])
+        print('Strings: '+str(stringmsg))
+        # creating list of new messages for client
+        to_send=[]
+        count=0
+        string=stringmsg
+        if fs != stringmsg:
+            for strnow in fs:
+                count=count+1
+                if count > stringmsg:
+                    to_send.append(strnow)
+                    string=string+1
             data=''
-            print(sendstr)
-            while True:
-                stringnow=txt[string]
-                data=data+'####1$$$'+stringnow+'$$$1'
-                string=string+1
-                if strinfile == string:
-                    break
-            lastmsg=txt[len(txt)-1]
+            for message in to_send:
+                if data == '':
+                    data=message
+                else:
+                    data=data+'####'+message
         else:
-            lastmsg=txt[len(txt)-1]
-        chat.close()
-        if sendstr == 0:
-            data='0$$$None'
-        elif sendstr == 1:
-            data='1$$$'+lastmsg+'$$$'+str(sendstr)
-        print('sent: '+data)
+            data='0'
+        print('Sent: '+data)
+        #sending data
         connection.send(data.encode())
         connection.close()
 sock.close()

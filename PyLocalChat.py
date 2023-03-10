@@ -97,6 +97,7 @@ def start(AccType='user'):
                 start()
             elif code == '':
                 print('Log in again')
+                log_out()
             else:
                 print('Code or AccType is wrong.')
         elif ans == '2':
@@ -186,7 +187,7 @@ def log_in():
             if check[2] == 'admin':
                 if pe == check[1]:
                     error=False
-                    print('Welcome back admin, '+nick+'!')
+                    print('Welcome back, admin '+nick+'!')
                     code=input('Please input Quick-L code (4 numbers): ')
                     coc=0
                     for num in code:
