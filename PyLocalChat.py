@@ -5,6 +5,7 @@ import hashlib
 import time
 from datetime import datetime
 import getpass
+import socket
 #                               GLOBAL VARIABLES
 mh=None
 at=None
@@ -36,15 +37,19 @@ def info():
     time.sleep(0.05)
     print('delete_acc()  Delete account.')
     time.sleep(0.05)
+    print('welcome()  Launch menu.')
+    time.sleep(0.05)
     print('')
     time.sleep(0.05)
     print('N o t e s :')
     time.sleep(0.5)
-    print('Use "start()" to avoid errors.')
+    print('Use "welcome()" to avoid errors.')
     time.sleep(0.05)
-    print("If you exited and you don't know what to do, restart programm or write 'loop()'.")
+    print("If you exited and you don't know what to do, restart programm or write "+'"welcome()","start()" or "loop()".')
     time.sleep(0.05)
     print('You cannot cancel deleting account after it is deleted.')
+    time.sleep(0.05)
+    print('We have no password restore system, so be careful:)')
     time.sleep(0.05)
     print('We see your feedback. Thanks for it :)')
 #                               main
@@ -97,7 +102,6 @@ def start(AccType='user'):
                 start()
             elif code == '':
                 print('Log in again')
-                log_out()
             else:
                 print('Code or AccType is wrong.')
         elif ans == '2':
@@ -111,6 +115,7 @@ def start(AccType='user'):
             if au == True:
                 at='admin'
                 print('What are you going to do?')
+                print('0. Connect to chat')
                 print('1. Change AccType.')
                 print('2. Delete account.')
                 print('3. Change my password.')
@@ -130,6 +135,8 @@ def start(AccType='user'):
                     rock(ans)
                 elif ans == '5':
                     BREAK=True
+                elif ans == '0':
+                    chat()
                 else:
                     pass
             else:
@@ -137,6 +144,7 @@ def start(AccType='user'):
         elif loggedin[0] == '0' and loggedin[2] == quickL:
             at='user'
             print('What are you going to do?')
+            print('0. Connect to chat')
             print('1. Delete my account.')
             print('2. Change my password.')
             print('3. Log out.')
@@ -151,6 +159,8 @@ def start(AccType='user'):
                 log_out()
             elif ans == '4':
                 BREAK=True
+            elif ans == '0':
+                chat()
             else:
                 pass
         else:
@@ -187,7 +197,7 @@ def log_in():
             if check[2] == 'admin':
                 if pe == check[1]:
                     error=False
-                    print('Welcome back, admin '+nick+'!')
+                    print('Welcome back admin, '+nick+'!')
                     code=input('Please input Quick-L code (4 numbers): ')
                     coc=0
                     for num in code:
@@ -298,16 +308,31 @@ def change_password():
             if checked == '':
                 pass
             else:
-                check=checked.split('$$$')
+                chk=checked.split('$$$')
                 count=count+1
-                if loggedin[1]==check[0]:
+                if loggedin[1]==chk[0]:
                     mh=True
                     break
         if mh == True:
-            print('MATCH FOUND')
             pe=hashlib.md5(old.encode()).hexdigest()
-            if pe == check[1]:
-                pe=hashlib.md5(new.encode()).hexdigest()
+            if pe == chk[1] and new != '':
+                npe=hashlib.md5(new.encode()).hexdigest()
+                acclist.pop(count)
+                acclist.pop(0)
+                chk.pop(1)
+                chk.insert(1, npe)
+                chkready=chk[0]+'$$$'+chk[1]+'$$$'+chk[2]
+                acclist.insert(count-1,chkready)
+                file=open('content/AccBase.sys','w')
+                file.write('')
+                file.close()
+                file=open('content/AccBase.sys','a')
+                for accfilew in acclist:
+                    file.write('\n'+accfilew)
+                file.close()
+                print('Password changed')
+            else:
+                print('Wrong password.')
         
     else:
         print('Wrong Auth')
@@ -363,9 +388,9 @@ def change_acctype():
                 chk.pop(2)
                 chk.insert(2,'admin')
             else:
-                pass
+                print(chk[1]+"'s AccType change canceled.")
             chkready=chk[0]+'$$$'+chk[1]+'$$$'+chk[2]
-            acclist.insert(con,chkready)
+            acclist.insert(con-1,chkready)
             file=open('content/AccBase.sys','w')
             file.write('')
             file.close()
@@ -560,7 +585,7 @@ def reg():
     coc=0
     for char in Nnick:
         coc=coc+1
-        if char == ' ' or char == '$':
+        if char == ' ' or char == '$' or char == '#' or char == "'" or char == '&&&':
             print(char+'  <<< INCORRECT SYMBOL')
             error = True
         else:
@@ -685,6 +710,253 @@ def loop(AT='u'):
                 start('admin')
     BREAK=False
 
+#                                      C  H  A  T
+
+def chat():
+    global loggenin
+    nick=loggedin[1]
+    string=0
+    print('FORBIDDEN SYMBOLS:\n"$$$", "##", "'+"'"+'", "####", "\\n".')
+    print('You are going to connect to chat. You can ask host for address and port.')
+    while True:
+        ipv4=input('Address:')
+        port=input('Port:')
+        try:
+            server_address=(str(ipv4),int(port))
+            break
+        except:
+            print('Wrong address or port. Example:\nAddress:172.0.0.1\nPort:1234')
+    data='sys$$$'+nick+'$$$j$$$0'
+    Mode='user'
+    print('\nCOMMANDS\n/leave  --  leave chat\n/reply MessageID  --  reply message\n/file my_file.txt  --  send file\n/silent user  --  silent msg\n')
+    print('ID')
+    file=open('content/chats/sent.csf', 'w')
+    file.write('')
+    file.close()
+    while True:
+        leave=False
+        if data == None:
+            msg=input('<'+nick+'>')
+            if '$' in msg or '#' in msg or "'" in msg or '#' in msg or "\n" in msg or '&&&' in msg:
+                print('Forbidden symbol')
+                data='str$$$'+str(string)
+            elif msg == '':
+                data='str$$$'+str(string)
+            elif msg[0] == '/':
+
+                
+                if msg == '/leave':
+                    data='sys'+'$$$'+nick+'$$$'+'l'
+                    leave=True
+
+                
+                elif '/reply' in msg:
+                    msg=msg.split()
+                    if len(msg) == 2:
+                        ID=msg[1]
+                        if ID.isdigit():
+                            rpl=input('{reply('+nick+'>>'+ID+')}')
+                            if rpl != '':
+                                if '$' in nick or '#' in nick or "'" in nick or '#' in nick or "\n" in nick or '&&&' in nick:
+                                    print('Forbidden symbol')
+                                else:
+                                    data='reply'+'$$$'+nick+'$$$'+rpl+'##'+ID+'$$$'+str(string)
+                            else:
+                                data='str$$$'+str(string)
+                        else:
+                            print('Wrong Message ID')
+                            data='str$$$'+str(string)
+                    else:
+                        print('Incorrect design. Example:\n\n01 <user1>Hi :)\n<user2>/reply 01\n{reply(user2>>01)}Hello @user1\n')
+                        data='str$$$'+str(string)
+
+                        
+                elif '/file' in msg:
+                    msg=msg.split()
+                    if len(msg) == 2:
+                        path=msg[1]
+                        try:
+                            fileop=open(path, 'rb')
+                            filt=fileop.read()
+                            data='str$$$'+str(string)
+                        except FileNotFoundError as e:
+                            print('File not found:\n')
+                            print(e)
+                            print('')
+                            data='str$$$'+str(string)
+                    else:
+                        print('Incorrect design. Example:\n\n<user2>/file my_folder/my_file.txt\n')
+                        data='str$$$'+str(string)
+
+                        
+                elif '/silent' in msg:
+                    msg=msg.split()
+                    if len(msg) == 2:
+                        sil=input('{silent('+nick+'>>'+msg[1]+')}')
+                        data='sil'+'$$$'+nick+'$$$'+sil+'##'+msg[1]+'$$$'+str(string)
+                    else:
+                        print('Incorrect design. Example:\n\n<user2>/silent user1\n{silent(user2>>user1)}hi:)\n')
+                        data='str$$$'+str(string)
+
+                        
+                elif '/savechat' in msg:
+                    msg=msg.split()
+                    if len(msg) == 2:
+                        path=msg[1]
+                        file=open(path, 'w')
+                        file.write('NOT WORKING FUNCTION')
+                        file.close()
+                        data='str$$$'+str(string)
+                    else:
+                        print('Incorrect design. Example:\n\n<user2>/savechat chat.txt\n')
+                    data='str$$$'+str(string)
+
+
+                elif '/mode' in msg:
+                    msg=msg.split()
+                    if len(msg) == 3:
+                        if msg[1] == 'set':
+                            if msg[2] == 'user':
+                                Mode='user'
+                            elif msg[2] == 'dev':
+                                Mode='dev'
+                            else:
+                                print('Unknown mode')
+                        else:
+                            print('Unknown command')
+                    else:
+                        print('Unknown command')
+                    data='str$$$'+str(string)
+
+
+                elif '/sysfile' in msg:
+                    if Mode == 'dev':
+                        msg=msg.split()
+                        if len(msg) == 3:
+                            if msg[1] == 'print':
+                                if msg[2] == 'sent':
+                                    try:
+                                        with open('content/chats/sent.csf', 'r') as file:
+                                            sentfile=file.read()
+                                        print(sentfile)
+                                    except:
+                                        print('File is not aviable')
+                                elif msg[2] == 'got':
+                                    string=0
+                                else:
+                                    print('Unknown value to print')
+                            elif msg[1] == 'clean':
+                                pass
+                            else:
+                                print('Unknown system file action')
+                    else:
+                        print('Command unaviable for this mode')
+                    data='str$$$'+str(string)
+
+                else:
+                    print('Unknown command')
+                    data='str$$$'+str(string)
+            else:
+                data='msg'+'$$$'+nick+'$$$'+msg+'$$$'+str(string)
+        inb=len(data.encode())+3
+        inb=len(str(inb))+inb
+        data=str(inb)+'&&&'+data
+        with open('content/chats/sent.csf', 'a') as file:
+            file.write('\n'+data)
+        if Mode == 'dev':
+            print('Sent:'+data)
+            
+        #                   T A L K I N G
+        
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            sock.connect(server_address)
+            sock.sendall(data.encode())
+            data=sock.recv(16)
+            size=data.decode().split('&&&')
+            if int(size[0]) > 16:
+                numof=(int(size[0])-16)/16
+                checkround=str(round(numof,1)).split('.')
+                if checkround[1] != '0':
+                    numof=int(checkround[0])+1
+                else:
+                    numof=int(checkround[0])
+                for x in range(numof):
+                    data=data+sock.recv(16)
+            data=data.decode()
+            data=data.split('&&&')[1]
+            msglist=data.split('####')
+            msg=None
+            if msglist != ['']:
+                for msg in msglist:
+                    msg=msg.split('$$$')
+                    ID=msg[3]
+                    if msg[0] == 'msg':
+                        print(ID+' <'+msg[1]+'>'+msg[2])
+                    elif msg[0] == 'reply':
+                        print(ID+' {'+msg[1]+' -> '+msg[2].split('##')[1]+'}'+msg[2].split('##')[0])
+                    elif msg[0] == 'sil':
+                        if msg[2].split('##')[1] == nick:
+                            print(ID+' $il{'+msg[1]+' -> '+msg[2].split('##')[1]+'}'+msg[2].split('##')[0])
+                        else:
+                            msg[2]='not aviable for you'
+                    elif msg[0] == 'sys':
+                        if msg[2] == 'j':
+                            print(ID+'    '+msg[1]+' joined this chat!')
+                        elif msg[2] == 'l':
+                            print(ID+'    '+msg[1]+' left.')
+                    string=string+1
+            time.sleep(0.1)
+            sock.close()
+            data=None
+        except:            
+            if leave == True:
+                break
+            print('Unable to establish connection')
+            sock.close()
+            ans=input('Do you want to reconnect? (y/n)|')
+            if ans != 'y' and ans != '':
+                break
+        data=None
+        if leave == True:
+            break
+
+def welcome():  
+    print('Type "/info" for help with interface or "/exit" to exit.')
+    print('Press ENTER to continue.')
+    while True:
+        answer=input('|')
+        if answer == '/info':
+            info()
+        elif answer == '/exit':
+            break
+        elif '/log' in answer:
+            try:
+                file=open('content/logs.sys', 'r')
+                if len(answer.split()) == 1:
+                    print(file.read())
+                elif len(answer.split()) == 3:
+                    answer=answer.split()
+                    if answer[1] == 'save':
+                        wr=open(answer[2], 'w')
+                        wr.write(file.read())
+                        print('Log copied to '+answer[2]+'\nEnjoy reading:)')
+                        wr.close()
+                else:
+                    print('Wrong command')
+                file.close()
+            except FileNotFoundError as e:
+                print('Cannot open log file\n')
+                print(e)
+        elif answer == 'a':
+            loop('a')
+            break
+        elif answer == '':
+            loop()
+            break
+        else:
+            print('Wrong command')
+
 def rock(xxx):
     print('⠀⠀⠀⠀⠀⠀⠀⠈⠀⠀⠀⠀⠀⠀⠀⠈⠈⠉⠉⠈⠈⠈⠉⠉⠉⠉⠉⠉⠉⠉⠙⠻⣄⠉⠉⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀')
     print('⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠓⣄⠀⠀⢀⠀⢀⣀⣤⠄⠀⠀⠀⠀⠀⠀⠀  ')
@@ -714,19 +986,5 @@ def rock(xxx):
     print('Did you said '+xxx+'?')
 
 print('Welcome to PyLocalChat!')
-print('Type "/info" for help with interface or "/exit" to exit.')
-print('Press ENTER to continue.')
-answer=input('|')
-while True:
-    if answer == '/info':
-        info()
-        answer=input('|')
-    elif answer == '/exit':
-        break
-    elif answer == 'a':
-        loop('a')
-        break
-    else:
-        loop()
-        break
+welcome()
 print('Type "info()"')

@@ -1,6 +1,7 @@
 import socket
 import sys
 import os
+import time
 #           GLOBAL
 
 connectionlist=[]
@@ -24,67 +25,93 @@ def checkdigit(check):
         return True
 
 #           HI
-
+while True:
+    ans=input('Choose type of server:\n1. Public (by default) --- anyone from your wifi can connect to your server\n2. Local --- just on this device\n|')
+    if ans == '' or ans == '1' or ans == '2':
+        break
+    else:
+        print('Wrong answer')
 sock=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 port=input('Port:')
 ch=checkdigit(port)
 if ch == True:
-    sock.bind((str(socket.gethostbyname(socket.gethostname())), int(port)))
-    print(socket.gethostbyname(socket.gethostname()))
+    if ans == '' or ans == '1':
+        sock.bind((str(socket.gethostbyname(socket.gethostname())), int(port)))
+        print('Address: '+socket.gethostbyname(socket.gethostname()))
+    else:
+        sock.bind(('', int(port)))
+        print('Address: 127.0.0.1')
     listn=input('Queue max len(ENTER for 16):')
     ch=checkdigit(listn)
     if ch == False:
         listn=16
     sock.listen(int(listn))
-    print('Cleaning Chat... \nPreparing for work...')
-#    with open('content/Chat.txt', 'w') as file:
-#        file.write('')
+    print('Cleaning chat...')
+    chatfile=open('content/chats/Chat.txt', 'w')
+    chatfile.write('')
+    chatfile.close()
     print('Server is ready for work')
     print('Queue started - waiting for clients')
-
-#           MAiN LooP
-    
+    ID=0
     while True:
-        # accepting one client
         connection, client_address = sock.accept()
-        # recieving data
-        inf=connection.recv(1024)
-        print('Got: '+inf.decode())
-        got=inf.decode().split('&&&&&')
-        inf=got[0].split('####')
-        with open('content/Chat.txt','a') as file:
-            for msg in inf:
-                file.write('\n'+msg)
-        #       SENDING INFO
-        #   finding the string
-        # how many Strings In File (SIF)
-        with open('content/Chat.txt','r') as file:
-            fs=file.read().split('\n')
-        fs.pop(0)
-        sif=len(fs)
-        # decoding message
-        stringmsg=int(got[1])
-        print('Strings: '+str(stringmsg))
-        # creating list of new messages for client
-        to_send=[]
-        count=0
-        string=stringmsg
-        if fs != stringmsg:
-            for strnow in fs:
-                count=count+1
-                if count > stringmsg:
-                    to_send.append(strnow)
-                    string=string+1
-            data=''
-            for message in to_send:
-                if data == '':
-                    data=message
-                else:
-                    data=data+'####'+message
-        else:
-            data='0'
-        print('Sent: '+data)
-        #sending data
-        connection.send(data.encode())
+        userleft=False
+        data=connection.recv(16)
+        size=data.decode().split('&&&')
+        print('\nSize:'+size[0]+' bytes')
+        if int(size[0]) > 16:
+            numof=(int(size[0])-16)/16
+            checkround=str(round(numof,1)).split('.')
+            if checkround[1] != '0':
+                numof=int(checkround[0])+1
+            else:
+                numof=int(checkround[0])
+            for x in range(numof):
+                data=data+connection.recv(16)
+        data=data.decode()
+        print('Got:'+data)
+        msgdata=data.split('&&&')[1]
+        msgsplit=msgdata.split('$$$')
+        if msgsplit[0] != 'str' and msgsplit[0] != 'sys':
+            ID=ID+1
+            tofile=msgsplit[0]+'$$$'+msgsplit[1]+'$$$'+msgsplit[2]+'$$$'+str(ID)
+            chatfile=open('content/chats/Chat.txt', 'a')
+            chatfile.write('\n'+tofile)
+            chatfile.close()
+            string=int(msgsplit[3])
+            print('ID given:'+str(ID))
+        elif msgsplit[0] == 'str':
+            string=int(msgsplit[1])
+        elif msgsplit[0] == 'sys':
+            ID=ID+1
+            tofile=msgsplit[0]+'$$$'+msgsplit[1]+'$$$'+msgsplit[2]+'$$$'+str(ID)
+            chatfile=open('content/chats/Chat.txt', 'a')
+            chatfile.write('\n'+tofile)
+            chatfile.close()
+            if msgsplit[2] == 'l':
+                userleft=True
+            else:
+                string=int(msgsplit[3])
+            print('ID given:'+str(ID))
+        if userleft==False:
+            chatfile=open('content/chats/Chat.txt', 'r')
+            chatdata=chatfile.read()
+            chatdata=chatdata.split('\n')
+            strnum=0
+            tosend=''
+            for msg in chatdata:
+                if strnum > string:
+                    if tosend == '':
+                        tosend=msg
+                    else:
+                        tosend=tosend+'####'+msg
+                strnum=strnum+1
+            inb=len(tosend.encode())+3
+            inb=len(str(inb))+inb
+            tosend=str(inb)+'&&&'+tosend
+            print('Size of message to send:'+str(inb))
+            print('To send:'+tosend)
+            connection.send(tosend.encode())
+            time.sleep(0.1)
         connection.close()
 sock.close()
